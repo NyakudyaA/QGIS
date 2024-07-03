@@ -19,9 +19,12 @@ __author__ = 'Victor Olaya'
 __date__ = 'November 2012'
 __copyright__ = '(C) 2012, Victor Olaya'
 
+from osgeo import gdal
 from qgis.core import (QgsProcessingException,
                        QgsProcessingParameterVectorLayer,
                        QgsProcessingParameterBoolean,
+                       QgsProcessingParameterString,
+                       QgsProcessingParameterDefinition,
                        QgsProcessingParameterFileDestination)
 from processing.algs.gdal.GdalAlgorithm import GdalAlgorithm
 from processing.algs.gdal.GdalUtils import GdalUtils
@@ -31,6 +34,8 @@ class ogrinfo(GdalAlgorithm):
     INPUT = 'INPUT'
     SUMMARY_ONLY = 'SUMMARY_ONLY'
     NO_METADATA = 'NO_METADATA'
+    JSON_OUTPUT = 'JSON_OUTPUT'
+    EXTRA = 'EXTRA'
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
@@ -45,10 +50,18 @@ class ogrinfo(GdalAlgorithm):
         self.addParameter(QgsProcessingParameterBoolean(self.NO_METADATA,
                                                         self.tr('Suppress metadata info'),
                                                         defaultValue=False))
-
+        self.addParameter(QgsProcessingParameterBoolean(self.JSON_OUTPUT,
+                                                        self.tr('Json output'),
+                                                        defaultValue=False))
+        extra_param = QgsProcessingParameterString(self.EXTRA,
+                                                   self.tr('Additional command-line parameters'),
+                                                   defaultValue=None,
+                                                   optional=True)
+        extra_param.setFlags(extra_param.flags() | QgsProcessingParameterDefinition.Flag.FlagAdvanced)
+        self.addParameter(extra_param)
         self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT,
                                                                 self.tr('Layer information'),
-                                                                self.tr('HTML files (*.html)')))
+                                                                self.tr('HTML files (*.html)','JSON files (*.json)')))
 
     def name(self):
         return 'ogrinfo'
@@ -72,7 +85,12 @@ class ogrinfo(GdalAlgorithm):
             arguments.append('-so')
         if self.parameterAsBoolean(parameters, self.NO_METADATA, context):
             arguments.append('-nomd')
-
+        if self.parameterAsBoolean(parameters, self.JSON_OUTPUT, context):
+            if int(gdal.VersionInfo('VERSION_NUM')) > GDAL_COMPUTE_VERSION(3, 7, 0):
+                arguments.append('-json')
+        if self.EXTRA in parameters and parameters[self.EXTRA] not in (None, ''):
+            extra = self.parameterAsString(parameters, self.EXTRA, context)
+            arguments.append(extra)
         inLayer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
         if inLayer is None:
             raise QgsProcessingException(self.invalidSourceError(parameters, self.INPUT))

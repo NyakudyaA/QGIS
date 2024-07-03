@@ -29,8 +29,10 @@ from qgis.core import (QgsProcessingException,
 from processing.algs.gdal.GdalAlgorithm import GdalAlgorithm
 from processing.algs.gdal.GdalUtils import GdalUtils
 
+
 def GDAL_COMPUTE_VERSION(maj, min, rev):
     return ((maj) * 1000000 + (min) * 10000 + (rev) * 100)
+
 
 class ogrinfo(GdalAlgorithm):
     INPUT = 'INPUT'
@@ -63,7 +65,7 @@ class ogrinfo(GdalAlgorithm):
         self.addParameter(extra_param)
         self.addParameter(QgsProcessingParameterFileDestination(self.OUTPUT,
                                                                 self.tr('Layer information'),
-                                                                self.tr('HTML files (*.html)','JSON files (*.json)')))
+                                                                self.tr('HTML files (*.html)', 'JSON files (*.json)')))
 
     def name(self):
         return 'ogrinfo'
